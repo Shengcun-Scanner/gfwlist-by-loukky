@@ -18,17 +18,22 @@ jobs:
 
       - name: Prepare sanitized input
         id: sanitize
+        env:
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
-          TITLE=$(echo "${{ github.event.issue.title }}" | head -c 500)
-          BODY=$(echo "${{ github.event.issue.body }}" | head -c 2000)
+          TITLE=$(printf '%s' "$ISSUE_TITLE" | head -c 500)
+          BODY=$(printf '%s' "$ISSUE_BODY" | head -c 2000)
+          DELIM="EOF_${RANDOM}${RANDOM}"
 
-          echo "title<<EOF" >> $GITHUB_OUTPUT
-          echo "$TITLE" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-          echo "body<<EOF" >> $GITHUB_OUTPUT
-          echo "$BODY" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          {
+            echo "title<<$DELIM"
+            printf '%s\n' "$TITLE"
+            echo "$DELIM"
+            echo "body<<$DELIM"
+            printf '%s\n' "$BODY"
+            echo "$DELIM"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Run AI inference
         id: inference
